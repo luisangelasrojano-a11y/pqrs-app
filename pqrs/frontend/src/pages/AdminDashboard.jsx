@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./UserDashboard.css";
 
+const API = "https://pqrs-app-vgxn.onrender.com"; // 🔥 NUEVO
+
 function AdminDashboard() {
   const [vista, setVista] = useState("ver");
 
@@ -60,9 +62,9 @@ function AdminPQRS() {
     let url = "";
 
     if (!filtro || filtro === "") {
-      url = "http://localhost:8080/pqrs/todas";
+      url = `${API}/pqrs/todas`;
     } else {
-      url = `http://localhost:8080/pqrs/estado?estado=${filtro}`;
+      url = `${API}/pqrs/estado?estado=${filtro}`;
     }
 
     fetch(url)
@@ -84,7 +86,7 @@ function AdminPQRS() {
   const cambiarEstado = async (id, estado) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/pqrs/${id}/estado?estado=${estado}`,
+        `${API}/pqrs/${id}/estado?estado=${estado}`,
         { method: "PUT" }
       );
 
@@ -106,7 +108,7 @@ function AdminPQRS() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/pqrs/${id}/responder`,
+        `${API}/pqrs/${id}/responder`,
         {
           method: "PUT",
           headers: {
@@ -224,7 +226,7 @@ function AdminStats() {
   const [stats, setStats] = useState({});
 
   useEffect(() => {
-    fetch("http://localhost:8080/pqrs/estadisticas-global")
+    fetch(`${API}/pqrs/estadisticas-global`)
       .then(res => {
         if (!res.ok) throw new Error();
         return res.json();

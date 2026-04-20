@@ -77,7 +77,7 @@ function CrearPQRS() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/pqrs", {
+      const response = await fetch("https://pqrs-app-vgxn.onrender.com/pqrs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,9 +138,9 @@ function VerPQRS() {
 
   // 🔥 MANEJO CORRECTO DEL FILTRO
   if (!filtro || filtro === "") {
-    url = `http://localhost:8080/pqrs/usuario/${usuario.id}`;
+    url = `https://pqrs-app-vgxn.onrender.com/pqrs/usuario/${usuario.id}`;
   } else {
-    url = `http://localhost:8080/pqrs/usuario/${usuario.id}/estado?estado=${filtro}`;
+    url = `https://pqrs-app-vgxn.onrender.com/pqrs/usuario/${usuario.id}/estado?estado=${filtro}`;
   }
 
   fetch(url)
@@ -172,7 +172,7 @@ const eliminarPQRS = async (id) => {
 
   try {
     const response = await fetch(
-      `http://localhost:8080/pqrs/${id}`,
+      `https://pqrs-app-vgxn.onrender.com/pqrs/${id}`,
       { method: "DELETE" }
     );
 
@@ -194,7 +194,7 @@ const eliminarPQRS = async (id) => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/pqrs/${item.id}`,
+        `https://pqrs-app-vgxn.onrender.com/pqrs/${item.id}`,
         {
           method: "PUT",
           headers: {
@@ -281,7 +281,7 @@ function Stats() {
   const usuario = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    fetch(`http://localhost:8080/${usuario.id}`)
+    fetch(`https://pqrs-app-vgxn.onrender.com/pqrs/estadisticas/${usuario.id}`)
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(() => alert("Error cargando estadísticas"));
@@ -329,7 +329,7 @@ function Perfil() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/test/actualizar/${usuario.id}`,
+        `https://pqrs-app-vgxn.onrender.com/test/actualizar/${usuario.id}`,
         {
           method: "PUT",
           headers: {
@@ -395,4 +395,4 @@ function Perfil() {
       </button>
     </div>
   );
-} 
+}

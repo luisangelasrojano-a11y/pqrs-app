@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
+const API = "https://pqrs-app-vgxn.onrender.com"; // 🔥 NUEVO
+
 function Login({ close }) {
   const navigate = useNavigate();
 
@@ -15,7 +17,7 @@ function Login({ close }) {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/test/login", {
+      const response = await fetch(`${API}/pqrs/login`, { // 🔥 CAMBIO CLAVE
         method: "POST",
         headers: {
           "Content-Type": "application/json",

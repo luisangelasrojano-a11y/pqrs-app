@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
 
+const API = "https://pqrs-app-vgxn.onrender.com"; // 🔥 NUEVO
+
 function Register() {
   const navigate = useNavigate();
 
@@ -31,13 +33,13 @@ function Register() {
               role: "ADMIN",
             };
 
-      const response = await fetch("http://localhost:8080/test/register", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(body),
-});
+      const response = await fetch(`${API}/pqrs/register`, { // 🔥 CAMBIO CLAVE
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
       if (response.ok) {
         alert("Registro exitoso");
@@ -154,4 +156,4 @@ function Register() {
   );
 }
 
-export default Register;  
+export default Register;
