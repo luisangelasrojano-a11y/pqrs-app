@@ -1,251 +1,844 @@
 import { useEffect, useState } from "react";
 import "./UserDashboard.css";
 
-const API = "https://pqrs-app-vgxn.onrender.com"; // 🔥 NUEVO
-
 function AdminDashboard() {
-  const [vista, setVista] = useState("ver");
+
+  //////////////////////////////////////////////////////
+  // STATES
+  //////////////////////////////////////////////////////
+
+  const [vista, setVista] =
+    useState("ver");
+
+  //////////////////////////////////////////////////////
+  // VALIDAR ADMIN
+  //////////////////////////////////////////////////////
 
   useEffect(() => {
-    const usuario = JSON.parse(localStorage.getItem("user"));
 
-    if (!usuario || usuario.role !== "ADMIN") {
+    const usuario =
+      JSON.parse(
+        localStorage.getItem("user")
+      );
+
+    if (
+      !usuario ||
+      usuario.role !== "ADMIN"
+    ) {
+
       window.location.href = "/";
     }
+
   }, []);
 
+  //////////////////////////////////////////////////////
+  // LOGOUT
+  //////////////////////////////////////////////////////
+
   const logout = () => {
-    if (confirm("¿Seguro que deseas cerrar sesión?")) {
-      localStorage.removeItem("user");
+
+    const confirmar =
+      window.confirm(
+        "¿Seguro que deseas cerrar sesión?"
+      );
+
+    if (confirmar) {
+
+     localStorage.removeItem("user");
+     localStorage.removeItem("token");
+
       window.location.href = "/";
     }
   };
 
+  //////////////////////////////////////////////////////
+  // RENDER
+  //////////////////////////////////////////////////////
+
   return (
+
     <div className="user-container">
+
+      {/* SIDEBAR */}
+
       <div className="sidebar">
-        <h2>ADMIN</h2>
 
-        <button onClick={() => setVista("ver")}>
-          Todas las PQRS
+        <h2>
+          👨‍💼 ADMIN
+        </h2>
+
+        <button
+          onClick={() =>
+            setVista("ver")
+          }
+        >
+          📋 Todas las PQRS
         </button>
 
-        <button onClick={() => setVista("stats")}>
-          Estadísticas Globales
+        <button
+          onClick={() =>
+            setVista("stats")
+          }
+        >
+          📊 Estadísticas
         </button>
 
-        <button className="logout" onClick={logout}>
-          Cerrar sesión
+        <button
+          className="logout"
+          onClick={logout}
+        >
+          🚪 Cerrar sesión
         </button>
+
       </div>
+
+      {/* CONTENIDO */}
 
       <div className="content">
-        {vista === "ver" && <AdminPQRS />}
-        {vista === "stats" && <AdminStats />}
+
+        {vista === "ver" && (
+
+          <AdminPQRS />
+
+        )}
+
+        {vista === "stats" && (
+
+          <AdminStats />
+
+        )}
+
       </div>
+
     </div>
   );
 }
 
 export default AdminDashboard;
 
-//////////////////////////////
-// 🔥 ADMIN PQRS
-//////////////////////////////
+//////////////////////////////////////////////////////
+// PANEL PQRS ADMIN
+//////////////////////////////////////////////////////
 
 function AdminPQRS() {
-  const [pqrs, setPqrs] = useState([]);
-  const [filtro, setFiltro] = useState("");
-  const [respuestas, setRespuestas] = useState({}); // 🔥 NUEVO
 
-  const cargar = () => {
-    let url = "";
+  //////////////////////////////////////////////////////
+  // STATES
+  //////////////////////////////////////////////////////
 
-    if (!filtro || filtro === "") {
-      url = `${API}/pqrs/todas`;
-    } else {
-      url = `${API}/pqrs/estado?estado=${filtro}`;
+  const [pqrs, setPqrs] =
+    useState([]);
+
+  const [filtro, setFiltro] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [respuestas, setRespuestas] =
+    useState({});
+
+  //////////////////////////////////////////////////////
+  // CARGAR PQRS
+  //////////////////////////////////////////////////////
+
+  const cargarPqrs = async () => {
+
+    try {
+
+      setLoading(true);
+
+      let url = "";
+
+      if (!filtro) {
+
+        url =
+          "http://localhost:8080/pqrs/todas";
+
+      } else {
+
+        url =
+          `http://localhost:8080/pqrs/estado?estado=${filtro}`;
+      }
+
+      const response =
+        await fetch(url);
+
+      if (!response.ok) {
+
+        throw new Error(
+          "Error cargando PQRS"
+        );
+      }
+
+      const data =
+        await response.json();
+
+      setPqrs(data || []);
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Error cargando PQRS"
+      );
+
+      setPqrs([]);
+
+    } finally {
+
+      setLoading(false);
     }
-
-    fetch(url)
-      .then(res => {
-        if (!res.ok) throw new Error("Error backend");
-        return res.json();
-      })
-      .then(data => setPqrs(data || []))
-      .catch(() => {
-        alert("Error cargando PQRS");
-        setPqrs([]);
-      });
   };
+
+  //////////////////////////////////////////////////////
+  // EFFECT
+  //////////////////////////////////////////////////////
 
   useEffect(() => {
-    cargar();
+
+    cargarPqrs();
+
   }, [filtro]);
 
-  const cambiarEstado = async (id, estado) => {
-    try {
-      const res = await fetch(
-        `${API}/pqrs/${id}/estado?estado=${estado}`,
-        { method: "PUT" }
-      );
+  //////////////////////////////////////////////////////
+  // COLOR ESTADO
+  //////////////////////////////////////////////////////
 
-      if (res.ok) cargar();
-      else alert("Error actualizando estado");
-    } catch {
-      alert("Error conexión");
+  const obtenerClaseEstado = (
+    estado
+  ) => {
+
+    if (!estado)
+      return "";
+
+    const valor =
+      estado.toLowerCase();
+
+    if (
+      valor.includes("pend")
+    ) {
+      return "pendiente";
+    }
+
+    if (
+      valor.includes("proceso") ||
+      valor.includes("revision")
+    ) {
+      return "proceso";
+    }
+
+    if (
+      valor.includes("resuelto")
+    ) {
+      return "resuelto";
+    }
+
+    if (
+      valor.includes("cerrado")
+    ) {
+      return "cerrado";
+    }
+
+    return "";
+  };
+
+  //////////////////////////////////////////////////////
+  // FORMATEAR ESTADO
+  //////////////////////////////////////////////////////
+
+  const formatearEstado = (
+    estado
+  ) => {
+
+    if (!estado)
+      return "Sin estado";
+
+    switch (
+      estado.toUpperCase()
+    ) {
+
+      case "PENDIENTE":
+        return "Pendiente";
+
+      case "PROCESO":
+        return "En trámite";
+
+      case "RESUELTO":
+        return "Resuelto";
+
+      case "CERRADO":
+        return "Cerrado";
+
+      default:
+        return estado;
     }
   };
 
-  // 🔥 RESPONDER PQRS
-  const responder = async (id) => {
-    const texto = respuestas[id];
+  //////////////////////////////////////////////////////
+  // INPUT RESPUESTA
+  //////////////////////////////////////////////////////
 
-    if (!texto || texto.trim() === "") {
-      alert("Escribe una respuesta");
-      return;
+  const handleRespuestaChange = (
+    id,
+    valor
+  ) => {
+
+    setRespuestas((prev) => ({
+
+      ...prev,
+
+      [id]: valor
+    }));
+  };
+
+  //////////////////////////////////////////////////////
+  // VALIDAR RESPUESTA
+  //////////////////////////////////////////////////////
+
+  const puedeResponder = (
+    item
+  ) => {
+
+    if (
+      !item.respuestaAdmin
+    ) {
+      return true;
+    }
+
+    if (
+      item.estado ===
+      "RESUELTO"
+      &&
+      !item.respuestaFinalEnviada
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  //////////////////////////////////////////////////////
+  // TEXTO INFO RESPUESTA
+  //////////////////////////////////////////////////////
+
+  const obtenerTextoRespuesta = (
+    item
+  ) => {
+
+    if (
+      !item.respuestaAdmin
+    ) {
+
+      return "Puedes enviar una respuesta oficial al usuario. Esta opción se deshabilitará después de enviar el mensaje.";
+    }
+
+    if (
+      item.estado ===
+      "RESUELTO"
+      &&
+      !item.respuestaFinalEnviada
+    ) {
+
+      return "La PQRS fue resuelta. Ahora puedes enviar el mensaje final al usuario.";
+    }
+
+    return "Ya fue enviada la respuesta correspondiente al usuario.";
+  };
+
+  //////////////////////////////////////////////////////
+  // ENVIAR RESPUESTA
+  //////////////////////////////////////////////////////
+
+  const enviarRespuesta = async (
+    item
+  ) => {
+
+    const mensaje =
+      respuestas[item.id];
+
+    if (
+      !mensaje ||
+      mensaje.trim() === ""
+    ) {
+
+      return alert(
+        "Debes escribir una respuesta."
+      );
     }
 
     try {
-      const res = await fetch(
-        `${API}/pqrs/${id}/responder`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ respuesta: texto }),
-        }
-      );
 
-      if (res.ok) {
-        alert("Respuesta enviada ✅");
-        setRespuestas({ ...respuestas, [id]: "" });
-        cargar();
-      } else {
-        alert("Error al responder");
+      const response =
+        await fetch(
+          `http://localhost:8080/pqrs/responder/${item.id}`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              mensaje
+            })
+          }
+        );
+
+      if (!response.ok) {
+
+        throw new Error();
       }
-    } catch {
-      alert("Error conexión");
+
+      alert(
+        "Respuesta enviada correctamente."
+      );
+
+      ////////////////////////////////////////////////////
+      // LIMPIAR TEXTAREA
+      ////////////////////////////////////////////////////
+
+      setRespuestas((prev) => ({
+
+        ...prev,
+
+        [item.id]: ""
+      }));
+
+      cargarPqrs();
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Error enviando respuesta."
+      );
     }
   };
+
+  //////////////////////////////////////////////////////
+  // ABRIR ARCHIVO
+  //////////////////////////////////////////////////////
+
+  const abrirArchivo = (
+    nombreArchivo
+  ) => {
+
+    window.open(
+      `http://localhost:8080/pqrs/archivo/${nombreArchivo}`,
+      "_blank"
+    );
+  };
+
+  //////////////////////////////////////////////////////
+  // RENDER
+  //////////////////////////////////////////////////////
 
   return (
+
     <div className="card">
-      <h2>Todas las PQRS</h2>
 
-      <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>
-        <option value="">Todas</option>
-        <option value="PENDIENTE">Pendiente</option>
-        <option value="PROCESO">Proceso</option>
-        <option value="RESUELTO">Resuelto</option>
-      </select>
+      {/* HEADER */}
 
-      {pqrs.length === 0 ? (
-        <p>No hay PQRS</p>
-      ) : (
-        pqrs.map(item => (
-          <div key={item.id} className="pqrs-item">
+      <div className="top-header">
 
-            <h4>{item.tipo}</h4>
+        <div>
+
+          <h2>
+            📋 Panel Administrativo PQRS
+          </h2>
+
+          <p className="subtitulo">
+
+            Gestión completa de solicitudes y seguimiento.
+
+          </p>
+
+        </div>
+
+        {/* FILTRO */}
+
+        <select
+          value={filtro}
+          onChange={(e) =>
+            setFiltro(
+              e.target.value
+            )
+          }
+        >
+
+          <option value="">
+            Todas
+          </option>
+
+          <option value="PENDIENTE">
+            Pendientes
+          </option>
+
+          <option value="PROCESO">
+            En trámite
+          </option>
+
+          <option value="RESUELTO">
+            Resueltas
+          </option>
+
+          <option value="CERRADO">
+            Cerradas
+          </option>
+
+        </select>
+
+      </div>
+
+      {/* LOADING */}
+
+      {loading && (
+
+        <p>
+          Cargando PQRS...
+        </p>
+
+      )}
+
+      {/* VACÍO */}
+
+      {!loading &&
+        pqrs.length === 0 && (
+
+          <div className="empty-box">
 
             <p>
-              <strong>
-                👤 {item.nombre || "Sin nombre"} (@{item.username || "sin_user"})
-              </strong>
+              No hay PQRS registradas.
             </p>
 
-            <p>{item.descripcion}</p>
-
-            <small className="fecha">
-              🕒 {new Date(item.fecha).toLocaleString("es-CO")}
-            </small>
-
-            {/* 🔥 RESPUESTA EXISTENTE */}
-            {item.respuestaAdmin && (
-              <div style={{ marginTop: "10px", color: "#2ecc71" }}>
-                💬 <strong>Respuesta:</strong> {item.respuestaAdmin}
-                <br />
-                <small>
-                  {new Date(item.fechaRespuesta).toLocaleString("es-CO")}
-                </small>
-              </div>
-            )}
-
-            {/* 🔥 INPUT RESPUESTA */}
-            {!item.respuestaAdmin && (
-              <div style={{ marginTop: "10px" }}>
-                <textarea
-                  placeholder="Escribir respuesta..."
-                  value={respuestas[item.id] || ""}
-                  onChange={(e) =>
-                    setRespuestas({
-                      ...respuestas,
-                      [item.id]: e.target.value,
-                    })
-                  }
-                />
-
-                <button onClick={() => responder(item.id)}>
-                  Enviar respuesta
-                </button>
-              </div>
-            )}
-
-            <div className="acciones">
-              <span className={`estado ${item.estado?.toLowerCase()}`}>
-                {item.estado}
-              </span>
-
-              <div>
-                <button onClick={() => cambiarEstado(item.id, "PENDIENTE")}>
-                  ⏳
-                </button>
-
-                <button onClick={() => cambiarEstado(item.id, "PROCESO")}>
-                  ⚙️
-                </button>
-
-                <button onClick={() => cambiarEstado(item.id, "RESUELTO")}>
-                  ✅
-                </button>
-              </div>
-            </div>
           </div>
-        ))
-      )}
+        )}
+
+      {/* LISTADO */}
+
+      {!loading &&
+        pqrs.length > 0 && (
+
+          <div className="pqrs-grid">
+
+            {pqrs.map((item) => (
+
+              <div
+                key={item.id}
+                className="admin-pqrs-card"
+              >
+
+                {/* HEADER */}
+
+                <div className="admin-card-top">
+
+                  <div>
+
+                    <h2 className="admin-card-title">
+                      {item.tipo}
+                    </h2>
+
+                    <p className="admin-card-user">
+
+                      👤{" "}
+
+                      <strong>
+                        {item.nombre ||
+                          "Sin nombre"}
+                      </strong>
+
+                      <span>
+                        {" "}@
+                        {item.username ||
+                          "sin_usuario"}
+                      </span>
+
+                    </p>
+
+                  </div>
+
+                  <div
+                    className={`admin-estado ${obtenerClaseEstado(
+                      item.estado
+                    )}`}
+                  >
+                    {formatearEstado(
+                      item.estado
+                    )}
+                  </div>
+
+                </div>
+
+                {/* DESCRIPCIÓN */}
+
+                <div className="admin-card-body">
+
+                  <p>
+                    {item.descripcion}
+                  </p>
+
+                </div>
+
+                {/* ARCHIVO */}
+
+                {item.archivo && (
+
+                  <div className="archivo-admin-box">
+
+                    <button
+                      className="archivo-btn"
+                      onClick={() =>
+                        abrirArchivo(
+                          item.archivo
+                        )
+                      }
+                    >
+                      📎 Ver archivo adjunto
+                    </button>
+
+                  </div>
+                )}
+
+                {/* RESPUESTA ADMIN */}
+
+                <div
+                  className={`respuesta-user-box ${
+                    !puedeResponder(item)
+                      ? "respuesta-bloqueada"
+                      : ""
+                  }`}
+                >
+
+                  <div className="respuesta-header">
+
+                    <div>
+
+                      <h3>
+                        💬 RESPUESTA AL USUARIO
+                      </h3>
+
+                      <p>
+                        {obtenerTextoRespuesta(
+                          item
+                        )}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  <div className="respuesta-actions">
+
+                    <textarea
+                      placeholder="Escribe la respuesta que será enviada al usuario..."
+                      value={
+                        respuestas[item.id] ||
+                        ""
+                      }
+                      disabled={
+                        !puedeResponder(item)
+                      }
+                      onChange={(e) =>
+                        handleRespuestaChange(
+                          item.id,
+                          e.target.value
+                        )
+                      }
+                    />
+
+                    <button
+                      disabled={
+                        !puedeResponder(item)
+                      }
+                      className="btn-enviar-respuesta"
+                      onClick={() =>
+                        enviarRespuesta(item)
+                      }
+                    >
+                      📩 Enviar respuesta
+                    </button>
+
+                  </div>
+
+                </div>
+
+                {/* FOOTER */}
+
+                <div className="admin-card-footer">
+
+                  <div className="admin-footer-left">
+
+                    <div className="admin-fecha">
+
+                      🕒{" "}
+
+                      {new Date(
+                        item.fecha
+                      ).toLocaleString(
+                        "es-CO"
+                      )}
+
+                    </div>
+
+                    {item.agenteAsignado && (
+
+                      <div className="admin-agent-box">
+
+                        <span>
+                          👨‍💼 Agente asignado
+                        </span>
+
+                        <strong>
+                          {item.agenteAsignado}
+                        </strong>
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                  <button
+                    className="admin-open-btn"
+                    onClick={() => {
+
+                      console.log(item);
+
+                      window.location.href =
+                        `/detalle-admin/${item.id || item._id}`;
+                    }}
+                  >
+                    📌 Revisar trámite
+                  </button>
+
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+        )}
+
     </div>
   );
 }
 
-//////////////////////////////
-// 🔥 ADMIN STATS
-//////////////////////////////
+//////////////////////////////////////////////////////
+// DASHBOARD STATS
+//////////////////////////////////////////////////////
 
 function AdminStats() {
-  const [stats, setStats] = useState({});
+
+  //////////////////////////////////////////////////////
+  // STATE
+  //////////////////////////////////////////////////////
+
+  const [stats, setStats] =
+    useState({});
+
+  //////////////////////////////////////////////////////
+  // EFFECT
+  //////////////////////////////////////////////////////
 
   useEffect(() => {
-    fetch(`${API}/pqrs/estadisticas-global`)
-      .then(res => {
-        if (!res.ok) throw new Error();
+
+    fetch(
+      "http://localhost:8080/pqrs/estadisticas-global"
+    )
+      .then((res) => {
+
+        if (!res.ok) {
+
+          throw new Error();
+        }
+
         return res.json();
       })
-      .then(data => setStats(data))
+
+      .then((data) => {
+
+        setStats(data);
+      })
+
       .catch(() => {
-        alert("Error cargando stats");
+
+        alert(
+          "Error cargando estadísticas"
+        );
+
         setStats({});
       });
+
   }, []);
 
-  return (
-    <div className="card">
-      <h2>Dashboard Global</h2>
+  //////////////////////////////////////////////////////
+  // RENDER
+  //////////////////////////////////////////////////////
 
-      <p>Total: {stats.total || 0}</p>
-      <p>Pendientes: {stats.pendientes || 0}</p>
-      <p>En proceso: {stats.proceso || 0}</p>
-      <p>Resueltos: {stats.resueltas || 0}</p>
+  return (
+
+    <div className="card">
+
+      <h2>
+        📊 Dashboard Global
+      </h2>
+
+      <div className="stats-grid">
+
+        <div className="stat-card">
+
+          <h3>
+            Total
+          </h3>
+
+          <p>
+            {stats.total || 0}
+          </p>
+
+        </div>
+
+        <div className="stat-card">
+
+          <h3>
+            Pendientes
+          </h3>
+
+          <p>
+            {stats.pendientes || 0}
+          </p>
+
+        </div>
+
+        <div className="stat-card">
+
+          <h3>
+            En proceso
+          </h3>
+
+          <p>
+            {stats.proceso || 0}
+          </p>
+
+        </div>
+
+        <div className="stat-card">
+
+          <h3>
+            Resueltas
+          </h3>
+
+          <p>
+            {stats.resueltas || 0}
+          </p>
+
+        </div>
+
+      </div>
+
     </div>
   );
 }

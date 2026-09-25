@@ -24,7 +24,7 @@ function Home() {
         </div>
       </div>
 
-      {/* 🔥 MODAL LOGIN */}
+      {/*  MODAL LOGIN */}
       {showLogin && (
         <div className="modal">
           <div className="modal-content">
